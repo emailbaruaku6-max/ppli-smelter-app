@@ -12,8 +12,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String status = "Menunggu...";
-  List<String> daftarBarang = []; // Keranjang penampung data
+  String status = "Memuat data...";
+  List<String> daftarBarang = [];
 
   @override
   void initState() {
@@ -22,16 +22,22 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> fetchData() async {
+    // ID Sheet milik Baginda
     final String sheetId = '1N5qEnYzJzEeKTv3nvrMyTrcTI-s-7gA3NE3Q4n2KjcA'; 
     final String url = 'https://docs.google.com/spreadsheets/d/$sheetId/gviz/tq?tqx=out:json';
     
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        // Logika sederhana: ambil data JSON dan masukkan ke keranjang
+        // Membersihkan data dari JSON Google Sheets
+        final jsonString = response.body.substring(47, response.body.length - 2);
+        final data = jsonDecode(jsonString);
+        final List rows = data['table']['rows'];
+        
         setState(() {
+          // Mengambil kolom pertama dari setiap baris
+          daftarBarang = rows.map((row) => row['c'][0]['v'].toString()).toList();
           status = "Data berhasil dimuat";
-          daftarBarang = ["Barang A", "Barang B", "Barang C"]; // Simulasi data
         });
       }
     } catch (e) {
@@ -42,14 +48,14 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("PPLI Smelter")),
+      appBar: AppBar(title: const Text("PPLI Smelter - Stok")),
       body: daftarBarang.isEmpty 
         ? Center(child: Text(status)) 
         : ListView.builder(
             itemCount: daftarBarang.length,
             itemBuilder: (context, index) {
               return ListTile(
-                leading: const Icon(Icons.inventory),
+                leading: const Icon(Icons.inventory_2, color: Colors.blue),
                 title: Text(daftarBarang[index]),
               );
             },
